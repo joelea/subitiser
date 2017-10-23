@@ -1,6 +1,6 @@
 # Distribution
 build/
-.idea
+.idea/
 
 # elm-package generated files
 elm-stuff
