@@ -8,15 +8,17 @@ import String exposing (toInt)
 import Result exposing (toMaybe)
 import Html exposing (button, Html, text, div, img, input)
 import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (placeholder)
 
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
 ---- MODEL ----
 
-dotSize = 10
+dotSize = 30
 dotGap = 5
-scaleFactor = 2 * ( dotSize + dotGap )
+scaleFactor = dotGap + (2 * dotSize)
+gridSize = 8
 
 type alias Model =
     { min: Maybe Int
@@ -87,19 +89,20 @@ view model =
     let
         positions = List.take model.value model.shuffledPositions
     in
-        div []
-            [ div []
-                [ Html.text "min"
-                , input [ onInput ChangeMin ] []
+        div [ class "app" ]
+            [
+            div [ class "controls" ]
+                [ div [ class "input-section" ]
+                    [ div [] [ Html.text "Give me a number between" ]
+                    , div [] [ input [ onInput ChangeMin, placeholder "min" ] [] ]
+                    , div [] [ Html.text "and" ]
+                    , div [] [ input [ onInput ChangeMax, placeholder "max" ] [] ]
+                    ]
+                , div []
+                    [ button [ class "shuffle-button", onClick Shuffle ] [ Html.text "shuffle" ]
+                    ]
                 ]
-            , div []
-                [ Html.text "max"
-                , input [ onInput ChangeMax ] []
-                ]
-            , div []
-                [ button [ onClick Shuffle ] [ Html.text "shuffle" ]
-                ]
-            , div [] <| [ partition positions ]
+            , div [ class "dots" ] <| [ partition positions ]
             ]
 
 
@@ -114,7 +117,7 @@ cartesian xs ys =
 
 possiblePositions =
     let
-        unitPositions  = cartesian (List.range 1 10) (List.range 1 10)
+        unitPositions  = cartesian (List.range 1 gridSize) (List.range 1 gridSize)
     in
         List.map (scale scaleFactor) unitPositions
 
@@ -133,9 +136,12 @@ type alias Position =
 
 partition : List Position -> Html Msg
 partition positions =
-    svg
-        [ width "1000", height "1000", viewBox "0 0 1000 1000" ]
-        ( List.map dot positions )
+    let
+        size = toString <| (gridSize + 1) * scaleFactor
+    in
+        svg
+            [ width size, height size, viewBox <| "0 0 " ++ size ++ " " ++ size ]
+            ( List.map dot positions )
 
 ---- PROGRAM ----
 
