@@ -4,21 +4,23 @@ import Random exposing (Seed, generate)
 import Random.List exposing (shuffle)
 import Random.Extra exposing (sample)
 
+import Color
+
 import String exposing (toInt)
 import Result exposing (toMaybe)
 import Html exposing (button, Html, text, div, img, input)
 import Html.Events exposing (onClick, onInput)
-import Html.Attributes exposing (placeholder)
+import Html.Attributes exposing (class, placeholder)
 
-import Svg exposing (..)
-import Svg.Attributes exposing (..)
+import Collage exposing (..)
+import Element exposing (..)
 
 ---- MODEL ----
 
 dotSize = 30
 dotGap = 5
 scaleFactor = dotGap + (2 * dotSize)
-gridSize = 8
+gridSize = 4
 
 type alias Model =
     { min: Maybe Int
@@ -117,31 +119,31 @@ cartesian xs ys =
 
 possiblePositions =
     let
-        unitPositions  = cartesian (List.range 1 gridSize) (List.range 1 gridSize)
+        unitPositions  = cartesian (List.range -gridSize gridSize) (List.range -gridSize gridSize)
     in
         List.map (scale scaleFactor) unitPositions
 
-dot : Position -> Svg Msg
-dot position = circle
-    [ r <| toString dotSize
-    , cx <| toString position.x
-    , cy <| toString position.y
-    ]
-    []
+dot : Position -> Form
+dot position = circle dotSize
+    |> filled Color.black
+    |> translate position
 
 type alias Position =
     { x: Int
     , y: Int
     }
 
+translate : Position -> Form -> Form
+translate position form = move (toFloat position.x, toFloat position.y) form
+
 partition : List Position -> Html Msg
 partition positions =
     let
-        size = toString <| (gridSize + 1) * scaleFactor
+        elements = List.map dot positions
+        size = (2 * (gridSize + 1) ) * scaleFactor
+        dots = collage size size elements
     in
-        svg
-            [ width size, height size, viewBox <| "0 0 " ++ size ++ " " ++ size ]
-            ( List.map dot positions )
+        toHtml dots
 
 ---- PROGRAM ----
 
