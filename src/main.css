@@ -20,6 +20,7 @@ body {
 }
 
 .dots {
+    position: absolute 0 0;
     display: flex;
     justify-content: center;
 }
