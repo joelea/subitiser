@@ -21,11 +21,11 @@ import Task
 
 ---- MODEL ----
 
-dotSize = 30
-dotGap = 5
+dotSize = 25
+dotGap = 4
 scaleFactor = dotGap + (2 * dotSize)
 gridSize = 4
-gridPixels = (2 * (gridSize + 1) ) * scaleFactor
+gridPixels = (2 * (gridSize + 3) ) * scaleFactor
 
 topSpacing = 200
 
@@ -37,6 +37,7 @@ type alias Model =
     , paths: List Path
     , currentPath: List (Float, Float)
     , screenWidth: Int
+    , currentlyDrawing: Bool
     }
 
 
@@ -50,6 +51,7 @@ init =
         , paths = []
         , currentPath = []
         , screenWidth = 0
+        , currentlyDrawing = False
         }
     , Task.perform SetWindowWidth Window.width
     )
@@ -65,6 +67,8 @@ type Msg
     | Shuffle
     | MouseMove Mouse.Position
     | SetWindowWidth Int
+    | StartDrawing Mouse.Position
+    | StopDrawing Mouse.Position
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -96,7 +100,7 @@ update msg model =
                 min = Maybe.withDefault 0 model.min
                 max = Maybe.withDefault 0 model.max
             in
-                ( model
+                ( { model | paths = [], currentPath = [] }
                 , generate ChangeValue (sample ( List.range min max ) )
                 )
         ShuffledPositions positions ->
@@ -110,11 +114,29 @@ update msg model =
                 translation = Position -(model.screenWidth // 2) (topSpacing + ( gridPixels // 2) )
                 posOnGrid = translatePosition translation originalPos
             in
-                ( { model | currentPath = model.currentPath ++ [( toFloat posOnGrid.x, toFloat posOnGrid.y )] }
-                , Cmd.none
-                )
+                if model.currentlyDrawing then
+                    ( { model | currentPath = model.currentPath ++ [( toFloat posOnGrid.x, toFloat posOnGrid.y )] }
+                    , Cmd.none
+                    )
+                else
+                    ( model, Cmd.none )
+
         SetWindowWidth width ->
             ( { model | screenWidth = width }
+            , Cmd.none
+            )
+
+        StartDrawing position ->
+            ( { model | currentlyDrawing = True }
+            , Cmd.none
+            )
+
+        StopDrawing position ->
+            ( { model
+                | currentlyDrawing = False
+                , currentPath = []
+                , paths = path (model.currentPath) :: model.paths
+               }
             , Cmd.none
             )
 
@@ -191,6 +213,8 @@ partition dotPositions paths =
 subscriptions model = Sub.batch
     [ Mouse.moves MouseMove
     , Window.resizes (\{width, height} -> SetWindowWidth width)
+    , Mouse.downs StartDrawing
+    , Mouse.ups StopDrawing
     ]
 
 ---- PROGRAM ----
