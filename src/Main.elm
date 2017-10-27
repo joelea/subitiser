@@ -203,8 +203,8 @@ translate position form = move (toFloat position.x, toFloat position.y) form
 partition : List Position -> List Path -> Html Msg
 partition dotPositions paths =
     let
-        linestyle = { defaultLine | join = Smooth, width = 100.0 }
-        lines = List.map (traced defaultLine) paths
+        linestyle = { defaultLine | join = Smooth, width = 5.0, cap = Round, color = Color.red }
+        lines = List.map (traced linestyle) paths
         dots = List.map dot dotPositions
         allElements = collage gridPixels gridPixels <| dots ++ lines
     in
