@@ -29,6 +29,11 @@ gridPixels = (2 * (gridSize + 3) ) * scaleFactor
 
 topSpacing = 200
 
+type ShutterState = Open | Closed
+
+toggle : ShutterState -> ShutterState
+toggle shutter = if shutter == Open then Closed else Open
+
 type alias Model =
     { min: Maybe Int
     , max: Maybe Int
@@ -38,6 +43,7 @@ type alias Model =
     , currentPath: List (Float, Float)
     , screenWidth: Int
     , currentlyDrawing: Bool
+    , shutter: ShutterState
     }
 
 
@@ -52,6 +58,7 @@ init =
         , currentPath = []
         , screenWidth = 0
         , currentlyDrawing = False
+        , shutter = Open
         }
     , Task.perform SetWindowWidth Window.width
     )
@@ -69,6 +76,7 @@ type Msg
     | SetWindowWidth Int
     | StartDrawing Mouse.Position
     | StopDrawing Mouse.Position
+    | ToggleShutter
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -140,6 +148,10 @@ update msg model =
             , Cmd.none
             )
 
+        ToggleShutter ->
+            ( { model | shutter = toggle model.shutter }
+            , Cmd.none
+            )
 
         default ->
             ( model, Cmd.none )
@@ -151,6 +163,11 @@ view model =
     let
         positions = List.take model.value model.shuffledPositions
         paths = path (model.currentPath) :: model.paths
+        dots = if model.shutter == Open then partition positions paths else partition [] []
+        shutterButtonLabel = if model.shutter == Open then "Close Shutter" else "Open Shutter"
+        shuffleButton = button [ class "shuffle-button", onClick Shuffle ] [ Html.text "shuffle" ]
+        shutterButton = button [ class "shutter-button", onClick ToggleShutter ] [ Html.text shutterButtonLabel ]
+        spacer = div [ class "spacer" ] []
     in
         div [ class "app" ]
             [
@@ -161,11 +178,9 @@ view model =
                     , div [] [ Html.text "and" ]
                     , div [] [ input [ onInput ChangeMax, placeholder "max" ] [] ]
                     ]
-                , div []
-                    [ button [ class "shuffle-button", onClick Shuffle ] [ Html.text "shuffle" ]
-                    ]
+                , div [ class "buttons" ] [ shuffleButton, spacer, shutterButton ]
                 ]
-            , div [ class "dots" ] <| [ partition positions paths ]
+            , div [ class "dots" ] <| [ dots ]
             ]
 
 
